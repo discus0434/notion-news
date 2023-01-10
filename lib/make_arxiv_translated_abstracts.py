@@ -162,8 +162,11 @@ def get_new_ak_arxiv_urls(client: tweepy.Client) -> list[str]:
             if url.startswith("https://arxiv.org/"):
                 arxiv_urls.append(url)
 
-    with open("arxiv_urls.log", "r") as f:
-        old_arxiv_urls = f.read().splitlines()
+    if os.path.exists("arxiv_urls.log"):
+        with open("arxiv_urls.log", "r") as f:
+            old_arxiv_urls = f.read().splitlines()
+    else:
+        old_arxiv_urls = []
 
     with open("arxiv_urls.log", "w") as f:
         f.write("\n".join(arxiv_urls))
