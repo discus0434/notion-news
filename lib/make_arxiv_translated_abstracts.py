@@ -53,7 +53,7 @@ def make_arxiv_translated_abstracts(
         total=len(arxiv_urls),
     ):
         inputs = tokenizer(info.summary, return_tensors="pt")
-        outputs = model.generate(**inputs, max_length=1024)
+        outputs = model.generate(**inputs)
         translated = tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
         subprocess.run(
