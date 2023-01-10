@@ -1,0 +1,5 @@
+/.env
+/arxiv_urls.log
+/node_modules
+/package-lock.json
+/venv
