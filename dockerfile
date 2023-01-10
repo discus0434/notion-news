@@ -39,3 +39,5 @@ RUN cd /home/workspace/notion-news && \
 RUN cd /home/workspace/notion-news && \
     npm install
 
+RUN chmod +x /home/workspace/notion-news/automation.sh
+
