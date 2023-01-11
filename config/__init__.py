@@ -7,7 +7,6 @@ from .config import (
     TWITTER_API_SECRET,
     TWITTER_BEARER_TOKEN,
     TWITTER_TOKEN_SECRET,
-    TWITTER_USER_NAME,
 )
 
 __all__ = [
@@ -18,6 +17,5 @@ __all__ = [
     "TWITTER_API_SECRET",
     "TWITTER_BEARER_TOKEN",
     "TWITTER_TOKEN_SECRET",
-    "TWITTER_USER_NAME",
     "ARXIV_CATEGORIES",
 ]
