@@ -36,10 +36,11 @@
     1. `docker build . -t notion-news`
     2. `chmod +x ./docker_run.sh && ./docker_run.sh`
   * 素の環境
-    1. `python -m venv venv`
-    2. `source venv/bin/activate`
-    3. `npm install`
-    4. `automation.sh`の1行目のパスを、リポジトリをクローンした位置に書き換える
-    5. `chmod +x ./automation.sh`
+    1. `pyenv local 3.9.11`
+    2. `python -m venv venv`
+    3. `source venv/bin/activate`
+    4. `npm install`
+    5. `automation.sh`の1行目のパスを、リポジトリをクローンした位置に書き換える
+    6. `chmod +x ./automation.sh`
 
 6. 任意のスケジューラに毎日`automation.sh`を実行させる
