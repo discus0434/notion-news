@@ -33,7 +33,7 @@
 
 5. 実行環境を作成する
   * Docker
-    1. `docker build notion-news/. -t notion-news`
+    1. `docker build . -t notion-news`
     2. `chmod +x ./docker_run.sh && ./docker_run.sh`
   * 素の環境
     1. `python -m venv venv`
