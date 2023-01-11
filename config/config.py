@@ -16,7 +16,6 @@ NOTION_ACCESS_TOKEN = os.getenv("NOTION_ACCESS_TOKEN")
 # Twitter
 ########################################################################
 # Twitter API keys (https://developer.twitter.com/en/portal/dashboard)
-# Make sure to enable "Read, Write, and Direct Messages" permissions
 TWITTER_API_KEY = os.getenv("TWITTER_API_KEY")
 TWITTER_API_SECRET = os.getenv("TWITTER_API_SECRET")
 TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
