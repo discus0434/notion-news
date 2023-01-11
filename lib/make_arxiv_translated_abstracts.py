@@ -38,7 +38,7 @@ def make_arxiv_translated_abstracts(
     list[NotionContent]
         list of notion contents.
     """
-    arxiv_urls = get_new_ak_arxiv_urls(client)
+    arxiv_urls_dict = get_new_ak_arxiv_urls(client)
 
     model = AutoModelForSeq2SeqLM.from_pretrained("staka/fugumt-en-ja")
     tokenizer = AutoTokenizer.from_pretrained("staka/fugumt-en-ja")
@@ -47,10 +47,10 @@ def make_arxiv_translated_abstracts(
     tokenizer.src_lang = "en"
 
     contents = []
-    for info in tqdm(
-        get_arxiv_abstracts(arxiv_urls),
+    for info, tweet_url in tqdm(
+        zip(get_arxiv_abstracts(list(arxiv_urls_dict.keys())), arxiv_urls_dict.values()),
         desc="Translating arxiv abstracts...",
-        total=len(arxiv_urls),
+        total=len(list(arxiv_urls_dict.keys())),
     ):
         inputs = tokenizer(info.summary, return_tensors="pt")
         outputs = model.generate(**inputs, max_length=512)
@@ -63,6 +63,17 @@ def make_arxiv_translated_abstracts(
         with open("./tmp.json", "r") as f:
             content_body = json.load(f)
         os.remove("./tmp.json")
+
+        content_body.append(
+            {
+                "type": "embed",
+                "embed": {
+                    "caption": [],
+                    "url": tweet_url,
+                },
+            }
+        )
+
         contents.append(
             NotionContent(
                 title=info.title,
@@ -129,7 +140,7 @@ def get_arxiv_abstracts(arxiv_urls: list[str]) -> list[arxiv.Result]:
         yield res
 
 
-def get_new_ak_arxiv_urls(client: tweepy.Client) -> list[str]:
+def get_new_ak_arxiv_urls(client: tweepy.Client) -> dict[str, str]:
     """Get new ak tweets and extract arxiv urls.
 
     Parameters
@@ -139,8 +150,8 @@ def get_new_ak_arxiv_urls(client: tweepy.Client) -> list[str]:
 
     Returns
     -------
-    list[tweepy.Tweet]
-        list of tweets.
+    dict[str, str]
+        dict of new arxiv urls and its original tweet urls.
     """
     tweets = client.get_users_tweets(
         id=2465283662,
@@ -148,7 +159,7 @@ def get_new_ak_arxiv_urls(client: tweepy.Client) -> list[str]:
         exclude=["retweets"],
     )
 
-    arxiv_urls = []
+    arxiv_urls_dict = {}
     for tweet in tweets.data:
         urls = re.findall(
             "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
@@ -160,17 +171,18 @@ def get_new_ak_arxiv_urls(client: tweepy.Client) -> list[str]:
             except TimeoutError:
                 continue
             if url.startswith("https://arxiv.org/"):
-                arxiv_urls.append(url)
-
+                arxiv_urls_dict[url] = f"https://twitter.com/_akhaliq/status/{tweet.id}"
     if os.path.exists("arxiv_urls.log"):
         with open("arxiv_urls.log", "r") as f:
             old_arxiv_urls = f.read().splitlines()
     else:
         old_arxiv_urls = []
 
+    arxiv_urls = list(arxiv_urls_dict.keys())
+
     with open("arxiv_urls.log", "w") as f:
         f.write("\n".join(arxiv_urls))
 
     new_arxiv_urls = set(arxiv_urls) - set(old_arxiv_urls)
 
-    return list(new_arxiv_urls)
+    return {key: val for key, val in arxiv_urls_dict.items() if key in new_arxiv_urls}
