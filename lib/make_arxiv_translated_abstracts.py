@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import random
@@ -23,7 +25,7 @@ class NotionContent:
 
 def make_arxiv_translated_abstracts(
     client: tweepy.Client, arxiv_categories: dict[str, str]
-) -> list[NotionContent]:
+) -> list[NotionContent] | None:
     """Make notion contents from arxiv abstracts.
 
     Parameters
@@ -40,6 +42,9 @@ def make_arxiv_translated_abstracts(
     """
     arxiv_urls_dict = get_new_ak_arxiv_urls(client)
 
+    if arxiv_urls_dict is None:
+        return None
+
     model = AutoModelForSeq2SeqLM.from_pretrained("staka/fugumt-en-ja")
     tokenizer = AutoTokenizer.from_pretrained("staka/fugumt-en-ja")
 
@@ -48,7 +53,9 @@ def make_arxiv_translated_abstracts(
 
     contents = []
     for info, tweet_url in tqdm(
-        zip(get_arxiv_abstracts(list(arxiv_urls_dict.keys())), arxiv_urls_dict.values()),
+        zip(
+            get_arxiv_abstracts(list(arxiv_urls_dict.keys())), arxiv_urls_dict.values()
+        ),
         desc="Translating arxiv abstracts...",
         total=len(list(arxiv_urls_dict.keys())),
     ):
@@ -122,7 +129,7 @@ def make_arxiv_translated_abstracts(
     return contents
 
 
-def get_arxiv_abstracts(arxiv_urls: list[str]) -> list[arxiv.Result]:
+def get_arxiv_abstracts(arxiv_urls: list[str]) -> list[arxiv.Result] | None:
     """Get arxiv abstracts.
 
     Parameters
@@ -155,7 +162,7 @@ def get_new_ak_arxiv_urls(client: tweepy.Client) -> dict[str, str]:
     """
     tweets = client.get_users_tweets(
         id=2465283662,
-        max_results=20,
+        max_results=25,
         exclude=["retweets"],
     )
 
@@ -167,22 +174,29 @@ def get_new_ak_arxiv_urls(client: tweepy.Client) -> dict[str, str]:
         )
         for url in urls:
             try:
-                url = requests.get(url).url
-            except TimeoutError:
+                url = requests.get(url, timeout=(3.0, 7.5)).url
+                if url.startswith("https://arxiv.org/"):
+                    arxiv_urls_dict[url] = f"https://twitter.com/_akhaliq/status/{tweet.id}"
+            except Exception as e:
+                print(e)
                 continue
-            if url.startswith("https://arxiv.org/"):
-                arxiv_urls_dict[url] = f"https://twitter.com/_akhaliq/status/{tweet.id}"
+
     if os.path.exists("arxiv_urls.log"):
         with open("arxiv_urls.log", "r") as f:
             old_arxiv_urls = f.read().splitlines()
     else:
         old_arxiv_urls = []
 
-    arxiv_urls = list(arxiv_urls_dict.keys())
+    arxiv_urls = list(arxiv_urls_dict.keys()) if arxiv_urls_dict else None
 
-    with open("arxiv_urls.log", "w") as f:
-        f.write("\n".join(arxiv_urls))
+    if arxiv_urls:
+        with open("arxiv_urls.log", "w") as f:
+            f.write("\n".join(arxiv_urls))
 
-    new_arxiv_urls = set(arxiv_urls) - set(old_arxiv_urls)
+        new_arxiv_urls = set(arxiv_urls) - set(old_arxiv_urls)
 
-    return {key: val for key, val in arxiv_urls_dict.items() if key in new_arxiv_urls}
+        return {
+            key: val for key, val in arxiv_urls_dict.items() if key in new_arxiv_urls
+        }
+    else:
+        return None

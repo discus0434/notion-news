@@ -36,7 +36,10 @@ def main():
         client=twitter_client, arxiv_categories=ARXIV_CATEGORIES
     )
 
-    contents = [weather_content] + arxiv_contents
+    if arxiv_contents is not None:
+        contents = [weather_content] + arxiv_contents
+    else:
+        contents = [weather_content]
 
     post_to_notion(
         client=notion_client,
